@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config()
 const port = process.env.port || 5000;
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 
 
@@ -32,6 +32,70 @@ async function run() {
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+        const rentCollection = client.db('rentalCar').collection('cars')
+
+        app.get('/cars', async (req, res) => {
+            const cursor = rentCollection.find();
+            const result = await cursor.toArray()
+            res.send(result);
+        })
+
+        app.post('/addCars', async (req, res) => {
+            const carsData = req.body
+
+            const result = await rentCollection.insertOne(carsData)
+
+            res.send(result)
+        })
+
+        app.get('/my-cars', async (req, res) => {
+            const email = req.query.email;
+            const result = await rentCollection.find({ email: email }).toArray()
+            res.send(result)
+        })
+
+        // Delate Cars 
+        app.delete('/car/:id', async (req, res) => {
+            const id = req.params.id;
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({ error: 'Invalid ID format' });
+            }
+            const query = { _id: new ObjectId(id) };
+            const result = await rentCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        //    get a car data by id  form db 
+        app.get('/car/:id', async (req, res) => {
+            const id = req.params.id;
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({ error: 'Invalid ID format' });
+            }
+            const query = { _id: new ObjectId(id) };
+            const result = await rentCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.put('/updateCars/:id', async (req, res) => {
+            const id = req.params.id
+            const carsData = req.body
+            const updated = {
+                $set: carsData
+            }
+
+            const query = { _id: new ObjectId(id) }
+            const options = { upsert: true }
+
+
+            const result = await rentCollection.updateOne(query , updated ,options)
+
+            res.send(result)
+        })
+
+
+
+
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close()
