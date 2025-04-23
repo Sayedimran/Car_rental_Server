@@ -34,6 +34,8 @@ async function run() {
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
         const rentCollection = client.db('rentalCar').collection('cars')
+        const bookingsCollection = client.db('rentalCar').collection('bookings');
+
 
         app.get('/cars', async (req, res) => {
             const cursor = rentCollection.find();
@@ -88,17 +90,66 @@ async function run() {
             const options = { upsert: true }
 
 
-            const result = await rentCollection.updateOne(query , updated ,options)
+            const result = await rentCollection.updateOne(query, updated, options)
 
             res.send(result)
         })
 
+        // my booking  confirm
 
+        // app.get('/carBooking', async (req, res) => {
+        //     const cursor = bookingsCollection.find()
+        //     const result = await cursor.toArray()
+        //     res.send(result)
+        // })
+
+        app.post("/booking", async (req, res) => {
+            const bookingData = req.body;
+            const result = await bookingsCollection.insertOne(bookingData)
+            res.send(result)
+        })
+
+        app.get('/bookedCar', async (req, res) => {
+            const email = req.query.userEmail;
+            const result = await bookingsCollection.find({ email: email }).toArray()
+            res.send(result)
+        })
+
+        app.delete('/bookedCar/:id', async (req, res) => {
+            const id = req.params.id;
+            if (!ObjectId.isValid(id)) {
+                return res.status(400).send({ error: 'Invalid ID format' });
+            }
+            const query = { _id: new ObjectId(id) };
+            const result = await bookingsCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        app.patch("/bookedCar/:id", async (req, res) => {
+            const id = req.params.id;
+            const { startDate, endDate } = req.body;
+
+            const result = await bookingsCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { startDate, endDate } }
+            );
+
+            res.send(result);
+        });
+
+        app.patch("/statusCar/:id", async (req, res) => {
+            const id = req.params.id;
+            const { status } = req.body;
+
+            const result = await bookingsCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { status: "Canceled" } }
+            )
+        })
 
 
     } finally {
-        // Ensures that the client will close when you finish/error
-        // await client.close()
+        // Ensures that the client will close when you finish/error        // await client.close()
     }
 }
 run().catch(console.dir);
