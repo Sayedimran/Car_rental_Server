@@ -43,6 +43,7 @@ async function run() {
             res.send(result);
         })
 
+
         app.post('/addCars', async (req, res) => {
             const carsData = req.body
 
@@ -97,11 +98,7 @@ async function run() {
 
         // my booking  confirm
 
-        // app.get('/carBooking', async (req, res) => {
-        //     const cursor = bookingsCollection.find()
-        //     const result = await cursor.toArray()
-        //     res.send(result)
-        // })
+
 
         app.post("/booking", async (req, res) => {
             const bookingData = req.body;
@@ -111,7 +108,7 @@ async function run() {
 
         app.get('/bookedCar', async (req, res) => {
             const email = req.query.userEmail;
-            const result = await bookingsCollection.find({ email: email }).toArray()
+            const result = await bookingsCollection.find({ userEmail: email }).toArray()
             res.send(result)
         })
 
@@ -149,7 +146,7 @@ async function run() {
 
 
     } finally {
-        // Ensures that the client will close when you finish/error        // await client.close()
+        // Ensures that the client will close when you finish
     }
 }
 run().catch(console.dir);
